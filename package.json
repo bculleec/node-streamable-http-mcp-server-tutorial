@@ -1,0 +1,21 @@
+{
+  "name": "mcp-tutorial",
+  "version": "1.0.0",
+  "description": "This tutorial will guide you through writing your own MCP server in Node.js and connect it to your AI agent. We will be specifically connecting it to an OpenAI agent, but it can be connected to any agent that accepts Streamable HTTP MCP. This project can easily be extended to fit your use-case and you will learn how to add any new tools your agent may need.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+	"dev": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
