@@ -242,7 +242,7 @@ Use the tools to respond to user requests. Always dump the output from the tool 
 main().catch(console.error);
 ```
 
-Then, you can run your agent with:
+Then, you can run your agent with (*make sure that your MCP server is running, either as a foreground process or as a system service*):
 
 ```
 node agent.js
@@ -267,5 +267,7 @@ can also build your OpenAI Agent more to make it a conversational assistant that
 
 ### References
 [MCP Simple Stateless Streamable HTTP MCP Server example](https://github.com/modelcontextprotocol/typescript-sdk/blob/main/src/examples/server/simpleStatelessStreamableHttp.ts)
+
 [Build an MCP Server](https://modelcontextprotocol.io/docs/develop/build-server#typescript)
+
 [OpenAI Agents SDK MCP Documentation](https://openai.github.io/openai-agents-js/guides/mcp/)
