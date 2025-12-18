@@ -256,6 +256,7 @@ My Awesome MCP Streamable HTTP Server listening on port 8000
 'calculate-euclidean-distance' returned :  20.106856660664292
 ```
 
+and the correct answer in the response from your agent,
 indicating that the agent was successfully able to find and use the tool.
 
 ### Conclusion and Next Steps
