@@ -265,4 +265,7 @@ from your MCP server.
 From this point, you can add more tools, and more complex tools such as calling command line scripts, or running functions from other libraries. You
 can also build your OpenAI Agent more to make it a conversational assistant that can call the tools from your MCP whenever it needs it.
 
-
+### References
+[MCP Simple Stateless Streamable HTTP MCP Server example](https://github.com/modelcontextprotocol/typescript-sdk/blob/main/src/examples/server/simpleStatelessStreamableHttp.ts)
+[Build an MCP Server](https://modelcontextprotocol.io/docs/develop/build-server#typescript)
+[OpenAI Agents SDK MCP Documentation](https://openai.github.io/openai-agents-js/guides/mcp/)
