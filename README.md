@@ -68,6 +68,8 @@ const getServer = () => {
                         version: '1.0.0'
                 }
         );
+
+		return server;
 };
 ```
 
@@ -93,11 +95,18 @@ Add this just after your server definition.
 
                         /* do other operations you may need here */
 
-                        const eucDist = calculateEuclideanDistance({ p1: { x: x1, y: y1 }, p2: { x: x1, y: y1 } });
+                        let eucDist;
+                        try {
+                                eucDist = calculateEuclideanDistance({ p1: { x: x1, y: y1 }, p2: { x: x2, y: y2 } });
+                        } catch (error) {
+                                console.log(`'calculate-euclidean-distance' error : `, error);
+                                return false;
+                        }
+
 
                         console.log(`'calculate-euclidean-distance' returned : `, eucDist);
 
-                        return eucDist;
+                        return { content: [ { type: 'text', text: eucDist.toString() } ] };
                 }
         );
 ```
@@ -121,3 +130,139 @@ We will use the `express` library to create our app.
 /* create an app to expose our MCP server */
 const app = createMcpExpressApp();
 ```
+
+Next, we will add a `post` endpoint at `/mcp` that will actually handle our MCP server requests. You can add GET and DELETE endpoints but that's not strictly necessarily.
+It is just nice for defensiveness and human readability.
+
+```
+/* create a POST route */
+app.post('/mcp', async (req, res) => {
+        const server = getServer();
+        try {
+                const transport = new StreamableHTTPServerTransport();
+                await server.connect(transport);
+                await transport.handleRequest(req, res, req.body);
+                res.on('close', () => {
+                        transport.close();
+                        server.close();
+                });
+        } catch (error) {
+                console.error('Error handling MCP request:', error);
+                if (!res.headersSent) {
+                        res.status(500).json({
+                                jsonrpc: '2.0',
+                                error: {
+                                        code: -32603,
+                                        message: 'Internal server error'
+                                },
+                                id: null
+                        });
+                }
+        }
+});
+``` 
+
+### Server start and shutdown
+The very last thing we will want is to start the server and also define the shutdown behavior.
+It is possible that the `PORT 8000` may already be in use if you are running other web applications. If that's the case, simple use a different port.
+
+```
+/* start the server */
+const PORT = 8000;
+app.listen(PORT, error => {
+        if (error) {
+                console.error('Failed to start server:', error);
+                process.exit(1);
+        }
+        console.log(`My Awesome MCP Streamable HTTP Server listening on port ${PORT}`);
+});
+
+/* handle server shutdown */
+process.on('SIGINT', async () => {
+        console.log('Shutting down server...');
+        process.exit(0);
+});
+```
+
+Hopefully, you should see a message that your server is running.
+
+### Testing our server with an Agent
+Now, we finally get to try out our MCP server. We will use OpenAI's Agent SDK to create an agent but you can hook up any agent that accepts
+Streamable HTTP MCP server to your new server.
+
+We will need to install the following dependencies:
+
+```
+npm i @openai/agents dotenv
+```
+
+Create a `.env` file and set your OpenAI API key as follows:
+
+```
+OPENAI_API_KEY=<api key>
+```
+
+*Note: If you are sharing your through `git` you should add an entry for your `.env` file in `.gitignore` to avoid your API keys getting leaked.*
+
+We will create a new file called `agent.js`.
+
+```
+vi agent.js
+```
+
+```
+import { Agent, run, MCPServerStreamableHttp } from '@openai/agents';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+async function main() {
+        const mcpServer = new MCPServerStreamableHttp({
+                url: 'http://localhost:8000/mcp',
+                name: 'My Awesome MCP Server'
+        });
+        const agent = new Agent({
+                name: 'MCP Assistant',
+                instructions: `
+Use the tools to respond to user requests. Always dump the output from the tool verbatim, no processing, no rounding.
+`,
+                mcpServers: [mcpServer],
+        });
+        try {
+                await mcpServer.connect();
+                const result = await run(agent, "What is the distance between origin and (13.21235, 15.1565)?");
+                console.log(result.finalOutput);
+        } catch (error) {
+                console.error(error);
+        } finally {
+                await mcpServer.close();
+        }
+}
+
+main().catch(console.error);
+```
+
+Then, you can run your agent with:
+
+```
+node agent.js
+```
+
+And you should see the following in your `server.js` logs:
+
+```
+My Awesome MCP Streamable HTTP Server listening on port 8000
+'calculate-euclidean-distance' was called with :  { x1: 0, y1: 0, x2: 13.21235, y2: 15.1565 }
+'calculate-euclidean-distance' returned :  20.106856660664292
+```
+
+indicating that the agent was successfully able to find and use the tool.
+
+### Conclusion and Next Steps
+You have successfully built a Streamable HTTP MCP Server in Node.js, and built an OpenAI Agent with the Node.js SDK that connects to and calls a tool
+from your MCP server.
+
+From this point, you can add more tools, and more complex tools such as calling command line scripts, or running functions from other libraries. You
+can also build your OpenAI Agent more to make it a conversational assistant that can call the tools from your MCP whenever it needs it.
+
+
