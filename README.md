@@ -53,10 +53,10 @@ We will need the following imports to use in our server script.
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { z } from "zod";
+import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 ```
 
-### Creating the server
-
+### Creating the MCP server
 Next we will create the MCP server. You can choose any name and version number you like. This is mostly just for metadata for the language model.
 
 ```
@@ -69,4 +69,55 @@ const getServer = () => {
                 }
         );
 };
+```
+
+### Registering a tool
+Next we will add a generic tool. I chose determining the distance between 2 points but you can replace this with any utility you want your agent to be able to call.
+Add this just after your server definition.
+
+```
+/* register a tool for our MCP server */
+        server.registerTool(
+                'calculate-euclidean-distance',
+                {
+                        description: 'Find the euclidean distance between 2 two-dimensional points',
+                        inputSchema: {
+                                x1: z.number().describe('x coordinate of first point'),
+                                y1: z.number().describe('y coordinate of first point'),
+                                x2: z.number().describe('x coordinate of second point'),
+                                y2: z.number().describe('y coordinate of second point'),
+                        }
+                },
+                async ({ x1, y1, x2, y2 }) => {
+                        console.log(`'calculate-euclidean-distance' was called with : `, { x1, y1, x2, y2 });
+
+                        /* do other operations you may need here */
+
+                        const eucDist = calculateEuclideanDistance({ p1: { x: x1, y: y1 }, p2: { x: x1, y: y1 } });
+
+                        console.log(`'calculate-euclidean-distance' returned : `, eucDist);
+
+                        return eucDist;
+                }
+        );
+```
+
+Then you can define the function in the same file or import it from a different file.
+
+```
+/* helpers */
+function calculateEuclideanDistance(p1, p2) {
+        const eucDist = Math.sqrt(((p1.x - p2.x) ** 2) + ((p1.y - p2.y) ** 2));
+        return eucDist;
+}
+```
+
+We now have a minimal MCP server definition with just one tool. We will now create an app that will run and expose our MCP server.
+
+### Running the MCP server
+We will use the `express` library to create our app.
+
+```
+/* create an app to expose our MCP server */
+const app = createMcpExpressApp();
 ```
